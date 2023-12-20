@@ -1,0 +1,74 @@
+import heapq
+
+class Node:
+    def __init__(self, state, parent=None, cost=0, heuristic=0):
+        self.state = state
+        self.parent = parent
+        self.cost = cost
+        self.heuristic = heuristic
+
+    def __lt__(self, other):
+        return (self.cost + self.heuristic) < (other.cost + other.heuristic)
+
+def astar(graph, start, goal):
+    open_list = []
+    closed_set = set()
+
+    start_node = Node(start, None, 0, heuristic_cost(start, goal))
+    heapq.heappush(open_list, start_node)
+
+    while open_list:
+        current_node = heapq.heappop(open_list)
+
+        if current_node.state == goal:
+            return reconstruct_path(current_node)
+
+        closed_set.add(current_node.state)
+
+        for neighbor, cost in graph[current_node.state]:
+            if neighbor in closed_set:
+                continue
+
+            tentative_cost = current_node.cost + cost
+            neighbor_node = Node(neighbor, current_node, tentative_cost, heuristic_cost(neighbor, goal))
+
+            if not any(node.cost < tentative_cost and node.state == neighbor for node in open_list):
+                heapq.heappush(open_list, neighbor_node)
+
+    return None  # No path found
+
+def heuristic_cost(node, goal):
+    # Example heuristic: Manhattan distance
+    x1, y1 = node
+    x2, y2 = goal
+    return abs(x1 - x2) + abs(y1 - y2)
+
+def reconstruct_path(node):
+    path = []
+    while node:
+        path.insert(0, node.state)
+        node = node.parent
+    return path
+
+# graph
+graph = {
+    (0, 0): [((0, 1), 1), ((1, 0), 1)],
+    (0, 1): [((0, 0), 1), ((0, 2), 1), ((1, 1), 1)],
+    (0, 2): [((0, 1), 1), ((1, 2), 1)],
+    (1, 0): [((0, 0), 1), ((1, 1), 1)],
+    (1, 1): [((1, 0), 1), ((0, 1), 1), ((1, 2), 1), ((2, 1), 1)],
+    (1, 2): [((0, 2), 1), ((1, 1), 1)],
+    (2, 0): [((2, 1), 1)],
+    (2, 1): [((2, 0), 1), ((1, 1), 1), ((2, 2), 1)],
+    (2, 2): [((2, 1), 1)]
+}
+
+
+start = (0, 0)
+goal = (2, 2)
+
+path = astar(graph, start, goal)
+if path:
+    print("Path found:", path)
+else:
+    print("No path found.")
